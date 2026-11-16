@@ -2,7 +2,10 @@ name: CommerceOS CI
 on:
   pull_request:
   push:
-    branches: [main, 'feat/**']
+    branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -68,5 +71,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f infra/Dockerfile -t commerceos-api:test .
-      - run: docker build -f infra/web.Dockerfile -t commerceos-web:test .
+      - run: docker build -f infra/Dockerfile -t commerceos-backend:local .
+      - run: docker build -f infra/web.Dockerfile -t commerceos-web:local .
+      - name: Smoke-test full Compose stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --no-build --wait --wait-timeout 180
+          curl --fail http://localhost:8080/
+          curl --fail http://localhost:8080/healthz
+      - name: Container diagnostics
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop smoke-test stack
+        if: always()
+        run: docker compose down -v
