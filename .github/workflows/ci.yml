@@ -1,0 +1,87 @@
+name: CommerceOS CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: commerceos_test
+          MYSQL_USER: commerce
+          MYSQL_PASSWORD: commerce_ci
+          MYSQL_ROOT_PASSWORD: root_ci
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost --silent"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=5s
+          --health-timeout=3s --health-retries=20
+    env:
+      APP_MODE: demo
+      NODE_ENV: development
+      DATABASE_URL: mysql://commerce:commerce_ci@127.0.0.1:3306/commerceos_test
+      REDIS_URL: redis://127.0.0.1:6379
+      APP_ORIGIN: http://localhost:3000
+      DEMO_PASSWORD: ci-synthetic-demo-2026
+      E2E_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run migrate
+      - run: npm run migrate
+      - run: npm run test:integration
+        env:
+          REDIS_URL: redis://127.0.0.1:6379/1
+      - run: npm run seed
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-test-results
+          path: |
+            test-results/
+            playwright-report/
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f infra/Dockerfile -t commerceos-backend:local .
+      - run: docker build -f infra/web.Dockerfile -t commerceos-web:local .
+      - name: Smoke-test full Compose stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --no-build --wait --wait-timeout 180
+          curl --fail http://localhost:8080/
+          curl --fail http://localhost:8080/healthz
+      - name: Container diagnostics
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop smoke-test stack
+        if: always()
+        run: docker compose down -v

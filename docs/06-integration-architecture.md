@@ -3,7 +3,7 @@
 PROPOSED. Mock là adapter duy nhất được phép ở slice đầu.
 
 ## Contract đề xuất
-`GetCapabilities(accountContext)`; `ResolveListing(validatedSourceId)`; `ObserveSku(exactSkuId, observationContext)`; `GenerateAffiliateLink(eligibleOffer)` khi capability tồn tại. Kết quả typed union: Available(value, provenance), Unavailable(reason), Unverified(missingEvidence), RateLimited(retryAfter), Revoked. Không trả số 0 thay dữ liệu thiếu.
+`GetCapabilities(accountContext)`; `ResolveListing(validatedSourceId)`; `ObserveSku(exactSkuId, observationContext)`; `GenerateAffiliateLink(eligibleOffer)` khi capability tồn tại. Kết quả typed result (contract tương lai): Available(value, provenance), Unavailable(reason), Unverified(missingEvidence), RateLimited(retryAfter), Revoked. Không trả số 0 thay dữ liệu thiếu.
 
 Provenance gồm provider, account reference, field, observedAt, receivedAt, territory, policyVersion, consent reference và synthetic flag. Không kèm credential trong DTO/event/log.
 
@@ -20,3 +20,6 @@ Slice đầu chỉ parse URI cục bộ: HTTPS, hostname exact allowlist đề x
 
 ## Contract tests khi coding
 Missing SKU, variant drift, changed currency, stale/unverified field, duplicate event, 429, revoke, expired policy, malformed URL, secret redaction, dead-letter/replay. Chỉ fixtures do dự án tạo, không private user data hay production purchase.
+
+## Mock adapter đã triển khai
+`resolveUrl`/`fixtureSku`/`mockObservation` là adapter nội bộ thuần TypeScript. Không có OAuth, HTTP client, real provider account hay token. Source key là job UUID hoặc initial watch key; fixture definitions trong source control là policy `synthetic-v1`. Provider-specific interfaces/registry vẫn là thiết kế cho real integration về sau, không giả vờ đã có.
