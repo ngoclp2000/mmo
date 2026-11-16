@@ -5,7 +5,7 @@ PROPOSED. MySQL là system of record; Redis không giữ bản duy nhất của 
 ## Khóa và quan hệ
 `tenants(id)` → `memberships(tenant_id,user_id,role)`; `connector_accounts(tenant_id,id,provider,secret_ref,policy_version)`; `source_listings(tenant_id,id,provider,external_id)` → `source_skus(tenant_id,id,listing_id,external_sku)`; `watchlists(tenant_id,id,user_id,sku_id)` → `watchlist_rules`; `price_observations(tenant_id,id,sku_id,observed_at,amount,currency,region,shipping_basis,voucher_basis,source_event_id,policy_version)` → `price_baselines`, `deal_scores`; `alerts` → `notification_deliveries`; `affiliate_links` → `outbound_clicks`. Conversion/commission chỉ tạo từ authorized report về sau.
 
-Tenant-owned parent/child dùng composite FK `(tenant_id,id)` để chặn cross-tenant reference. Identity được resolve từ session, không tin tenant_id từ request body. Global query filters cộng explicit policy checks, negative integration tests; raw SQL phải bind tenant.
+Tenant-owned parent/child dùng composite FK `(tenant_id,id)` để chặn cross-tenant reference. Identity được resolve từ session, không tin tenant_id từ request body. Explicit scoped query helpers cộng policy checks, negative integration tests; raw SQL phải bind tenant.
 
 ## Index và tính đúng
 - Unique membership `(tenant_id,user_id)`, source SKU `(tenant_id,provider,external_sku)` với định danh đủ namespace listing/account nếu provider chỉ unique trong listing.
@@ -22,3 +22,6 @@ Bắt đầu index + bounded retention purge theo batch. Chưa partition ngay: M
 Backup đề xuất encrypted snapshot + binlog PITR; RPO/RTO và tần suất chờ ngân sách. Restore drill phải chạy trước production. Xóa dữ liệu có audit và backup expiry documented, không hứa xóa tức thì mọi backup.
 
 ClickHouse chỉ là projection khi benchmark MySQL không đạt envelope đã duyệt. Backfill bằng watermark và eventId, replay idempotent, kiểm tra counts/checksums, dual-read so kết quả; cutover feature flag, rollback về MySQL. Không dual-write không transaction.
+
+## Schema slice 1
+Migration `infra/001-initial.sql` chỉ tạo bảng thực sự cần: identity/session, watchlists, observations, deal_scores, sync_jobs, outbox/inbox, alerts/deliveries, outbound_clicks và audit. Catalog fixture lưu trong source, chưa có canonical matching. Bảng integrations/billing/conversion trong mô hình logical là future scope. SQL statements dùng bound parameters, DB session timezone UTC; boolean/decimal được serialize rõ trong dashboard DTO.

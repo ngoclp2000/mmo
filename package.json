@@ -1,0 +1,51 @@
+{
+  "name": "commerceos",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "tsx watch apps/api/src/server.ts",
+    "dev:worker": "tsx watch apps/worker/src/main.ts",
+    "dev:web": "npm run dev -w @commerceos/web -- --host 0.0.0.0",
+    "migrate": "tsx packages/core/src/migrate.ts",
+    "seed": "tsx packages/core/src/seed.ts",
+    "typecheck": "tsc --noEmit && npm run typecheck -w @commerceos/web",
+    "lint": "eslint .",
+    "format": "prettier --write apps packages tests scripts",
+    "format:check": "prettier --check apps packages tests scripts",
+    "test": "tsx --test tests/unit.test.ts",
+    "test:integration": "tsx --test --test-concurrency=1 tests/integration.test.ts",
+    "test:e2e": "playwright test",
+    "build": "npm run build -w @commerceos/web && tsc -p tsconfig.build.json",
+    "start:api": "node dist/apps/api/src/server.js",
+    "start:worker": "node dist/apps/worker/src/main.js"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^10.1.11",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.6.2",
+    "ioredis": "^5.8.2",
+    "mysql2": "^3.15.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.0",
+    "eslint": "^9.39.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.3"
+  }
+}

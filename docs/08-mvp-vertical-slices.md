@@ -1,6 +1,6 @@
 # 08 · MVP slices và execution workflow
 
-PROPOSED; chưa có slice implementation nào được duyệt hoặc hoàn thành. Complexity S/M/L là tương đối, không là cam kết thời gian.
+Chủ repo yêu cầu triển khai theo master prompt và cho phép backend Node.js ngày 2026-11-16. Slice mock E2E được triển khai trong đợt này; xem tài liệu 11 cho kết quả kiểm chứng và giới hạn. Các đề xuất mở rộng vẫn cần review. Complexity S/M/L là tương đối, không là cam kết thời gian.
 
 ## Dependency graph
 ```mermaid
@@ -38,7 +38,7 @@ sequenceDiagram
 ```
 
 ## Slice 1 đề xuất: synthetic E2E
-Foundation: Vue SPA, .NET API/worker, MySQL migrations, Redis health/cache nếu thực sự dùng; Compose, local seed, CI. API/worker tenant-aware; session/login đủ kiểm chứng hai tenant. Adapter không gọi internet.
+Foundation: Vue SPA, Node.js/TypeScript API/worker, MySQL migrations, Redis health/cache nếu thực sự dùng; Compose, local seed, CI. API/worker tenant-aware; session/login đủ kiểm chứng hai tenant. Adapter không gọi internet.
 
 | ID | Work item / acceptance | Size | Depends |
 |---|---|---|---|
@@ -62,3 +62,6 @@ Clean checkout chạy theo README; migrate/seed repeatable; toàn bộ fixture g
 
 ## Architecture-to-implementation gate
 Chủ repo xác nhận domain boundaries, mock scope, tiêu chí thành công, price wording và freshness/test defaults. API thật là gate riêng yêu cầu quyền và terms được xác minh. Setup tài liệu không có nghĩa các gate đã được thông qua.
+
+## Phạm vi thực thi được chọn
+Node 24 LTS/Fastify; workspace-seeded identity với scrypt/server sessions; MySQL durable jobs/outbox; Redis API rate limiting; inbox demo. Baseline window 7 ngày, freshness 6 giờ, minSamples 2 là cấu hình **demo**, không là cam kết chính sách/tần suất API thật. Check ban đầu và mô phỏng thủ công, chưa adaptive polling.
