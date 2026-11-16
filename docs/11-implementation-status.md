@@ -48,3 +48,5 @@ Hardening local operations: periodic mock schedule có budget, restore drill, re
 - Playwright Chromium: 1/1 E2E pass trên frontend build với API/worker tách process; desktop 1440px và mobile 390px. Screenshot đã kiểm tra trực quan; điều chỉnh hero mobile để không che chữ.
 - `npm audit --omit=dev`: 0 vulnerabilities sau nâng `@fastify/static` lên bản vá.
 - Docker backend và web build đã chạy được bằng session CA secret (môi trường cloud có TLS proxy). Bản Dockerfile trong repo giữ trust mặc định cho máy thường/CI, không chứa CA hoặc tắt TLS verification. Trạng thái Compose cuối cùng xem PR.
+
+Full `docker compose up` chưa được xác nhận trong cloud này: storage driver VFS và ổ 7.9 GB hết dung lượng khi tạo container migration, dù cả hai image build thành công. Đã dọn các image/cache trung gian của phiên để trả lại dung lượng; không xóa volume MySQL/Redis. API/worker build đã được kiểm chứng bằng process Node với MySQL/Redis Docker thật. Cần smoke-test toàn bộ Compose trên runner/máy đủ dung lượng trước khi coi full-stack container runtime là verified.
